@@ -85,16 +85,16 @@ bool QNetworkSettingsServicePrivate::updateProperties(){
 void QNetworkSettingsServicePrivate::propertyCall(QString key,QVariant val){
     Q_Q(QNetworkSettingsService);
 
-    if(key == PropertyIPv4){
+    if(key == PropertyIPv4){ //mask is made by using a method
         m_ipv4config.setAddress(val.value<QNetworkSettingsIPv4 *>()->address());
         m_ipv4config.setGateway(val.value<QNetworkSettingsIPv4 *>()->gateway());
         m_ipv4config.setMask(QNetworkSettingsServicePrivate::ensureMask(val.value<QNetworkSettingsIPv4 *>()->mask().toInt()));
         m_ipv4config.setMethod(val.value<QNetworkSettingsIPv4 *>()->method());
     }
-    if(key == PropertyName){ //salvo il nome uguale all'ssid
+    if(key == PropertyName){ //now the ssid is the same as the name because i need to find something to make a unique id for every connection
         m_name = val.toString();
     }
-    if(key == PropertyIPv6){ //per l' ipv6 non c'è una variabile per la maschera
+    if(key == PropertyIPv6){ //ipv6 has a prefixLength and not a mask
         m_ipv6config.setAddress(val.value<QNetworkSettingsIPv6 *>()->address());
         m_ipv6config.setGateway(val.value<QNetworkSettingsIPv6 *>()->gateway());
         m_ipv6config.setMethod(val.value<QNetworkSettingsIPv6 *>()->method());
@@ -103,9 +103,6 @@ void QNetworkSettingsServicePrivate::propertyCall(QString key,QVariant val){
     if(key == PropertyProxy){
         m_proxyConfig.setUrl(val.value<QNetworkSettingsProxy *>()->url());
         QStringList lista =(val.value<QNetworkSettingsProxy *>()->excludes())->index(0,0).data().toStringList();
-        /*foreach(const QString &item,lista){
-            qDebug() << "escluso" << item;
-        }*/
         m_proxyConfig.setExcludes(lista);
     }
     if(key == PropertyDomains){
@@ -120,7 +117,7 @@ void QNetworkSettingsServicePrivate::propertyCall(QString key,QVariant val){
     if(key == PropertyStrength){
         m_wifiConfig.setSignalStrength(val.toInt());
     }
-    if(key == PropertySecurity){ //devo assegnare il valore di enum a seconda dei vari tipi di
+    if(key == PropertySecurity){ //android has 15 security types but the library is made for only 4
         switch(val.toInt()){
         case -1:
             m_wifiConfig.setSecurity(QNetworkSettingsWireless::Security::None);

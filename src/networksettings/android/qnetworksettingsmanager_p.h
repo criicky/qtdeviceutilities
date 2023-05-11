@@ -76,9 +76,9 @@ public:
     void updateServices();
     bool checkExistence(QString ssid);
     QString formattedSSID(QString ssid);
-    void salvoDNS(QJniObject domain,QNetworkSettingsService *service);
-    void salvoProxy(QJniObject domain,QNetworkSettingsService *service);
-    QString salvoGateway(QJniObject linkProperties,QString key);
+    void savingDNS(QJniObject domain,QNetworkSettingsService *service);
+    void savingProxy(QJniObject domain,QNetworkSettingsService *service);
+    QString savingGateway(QJniObject linkProperties,QString key);
     void wirelessConfig(QJniObject wifiInfo,QJniObject networkCapabilities,QNetworkSettingsService *service);
     bool updateProperties(QVariant mod,QNetworkSettingsService *service);
 
@@ -93,7 +93,7 @@ private:
     void handleNewService(const QString &servicePath);
 public:
     QNetworkSettingsServiceModel *m_serviceModel;
-    bool modifiche;
+    bool changes;
 protected:
     QNetworkSettingsInterfaceModel m_interfaceModel;
     QNetworkSettingsServiceFilter *m_serviceFilter;
