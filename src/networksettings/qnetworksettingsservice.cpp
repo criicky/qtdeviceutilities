@@ -539,7 +539,7 @@ void QNetworkSettingsService::setupNetworkSettingsProxy()
 
 /*!
     Initiates the process of connecting to this network service.
-
+setCurrentConnection
     \sa disconnectService()
 */
 void QNetworkSettingsService::connectService()
@@ -591,6 +591,11 @@ void QNetworkSettingsService::removeService()
 {
     Q_D(QNetworkSettingsService);
     d->removeService();
+}
+
+void QNetworkSettingsService::propertyCall(QString key, QVariant val){ //per chiamare dall esterno il metodo di updatePriority
+    Q_D(QNetworkSettingsService);
+    d->propertyCall(key,val);
 }
 
 QT_END_NAMESPACE

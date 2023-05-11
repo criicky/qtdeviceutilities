@@ -26,34 +26,52 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-#ifndef QNETWORKSETTINGSADDRESSMODEL_H
-#define QNETWORKSETTINGSADDRESSMODEL_H
+#ifndef QNETWORKSETTINGSINTERFACEPRIVATE_H
+#define QNETWORKSETTINGSINTERFACEPRIVATE_H
 
-#include <QStringListModel>
-#include <QtNetworkSettings/qnetworksettingsglobal.h>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists for the convenience
+// of other Qt classes.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include <QObject>
+#include "qnetworksettings.h"
+#include "qnetworksettingsinterface.h"
+#include <QJniObject>
 
 QT_BEGIN_NAMESPACE
 
-class Q_NETWORKSETTINGS_EXPORT QNetworkSettingsAddressModel : public QStringListModel
+class QNetworkSettingsInterfacePrivate : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_DECLARE_PUBLIC(QNetworkSettingsInterface)
 public:
-    explicit QNetworkSettingsAddressModel(QObject *parent = nullptr);
-    explicit QNetworkSettingsAddressModel(const QStringList &strings, QObject *parent = nullptr);
-    Q_INVOKABLE void append(const QString& address);
-    Q_INVOKABLE void remove(int index);
-    Q_INVOKABLE void resetChanges();
-    void setStringList(const QStringList &addresses);
-    int count() const;
-    QStringList getAddresses();
+    explicit QNetworkSettingsInterfacePrivate(QNetworkSettingsInterface* parent);
+    void initialize(const QString& path, const QVariantMap& properties);
+    void setPowered(const bool power);
+    void setState(QNetworkSettingsState::State aState);
+    void scan();
+    QString name() const {return m_name;}
+    QNetworkSettingsType::Type type() const {return m_type.type();}
+    QNetworkSettingsState::State state() const {return m_state.state();}
+    bool powered() const {return m_powered;}
+    QString path() const;
 
-Q_SIGNALS:
-    void countChanged();
-public:
-    QStringList m_addresses;
+protected:
+    QString m_name;
+    QJniObject m_technology;
+    QNetworkSettingsType m_type;
+    QNetworkSettingsState m_state;
+    bool m_powered;
+    QNetworkSettingsInterface *q_ptr;
 };
 
 QT_END_NAMESPACE
 
-#endif // QNETWORKSETTINGSADDRESSMODEL_H
+#endif // QNETWORKSETTINGSINTERFACEPRIVATE_H

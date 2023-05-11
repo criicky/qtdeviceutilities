@@ -3,7 +3,7 @@
 #####################################################################
 ## NetworkSettings Module:
 #####################################################################
-
+if(LINUX)
 qt_internal_add_module(NetworkSettings
     SOURCES
         connman/connmancommon.cpp connman/connmancommon.h
@@ -33,5 +33,29 @@ qt_internal_add_module(NetworkSettings
         Qt::Network
     GENERATE_CPP_EXPORTS
 )
-
-file(MAKE_DIRECTORY header_connman)
+elseif(ANDROID)
+    qt_internal_add_module(NetworkSettings
+        SOURCES
+            android/qnetworksettingsinterface_p.cpp android/qnetworksettingsinterface_p.h
+            android/qnetworksettingsmanager_p.cpp android/qnetworksettingsmanager_p.h
+            android/qnetworksettingsservice_p.cpp android/qnetworksettingsservice_p.h
+            android/qnetworksettingsuseragent_p.cpp android/qnetworksettingsuseragent_p.h
+            qnetworksettings.cpp qnetworksettings.h
+            qnetworksettingsaddressmodel.cpp qnetworksettingsaddressmodel.h
+            qnetworksettingsinterface.cpp qnetworksettingsinterface.h
+            qnetworksettingsinterfacemodel.cpp qnetworksettingsinterfacemodel.h
+            qnetworksettingsmanager.cpp qnetworksettingsmanager.h
+            qnetworksettingsservice.cpp qnetworksettingsservice.h
+            qnetworksettingsservicemodel.cpp qnetworksettingsservicemodel.h
+            qnetworksettingsuseragent.cpp qnetworksettingsuseragent.h
+        INCLUDE_DIRECTORIES
+            android
+        PUBLIC_LIBRARIES
+            Qt::Core
+            Qt::Quick
+            Qt::Gui
+            Qt::Network
+            Qt::CorePrivate
+        GENERATE_CPP_EXPORTS
+    )
+endif()

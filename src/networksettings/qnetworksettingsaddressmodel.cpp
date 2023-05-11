@@ -88,12 +88,17 @@ void QNetworkSettingsAddressModel::append(const QString& address)
     int row = rowCount();
 
     bool succeed = insertRows(row, 1);
+    qWarning() << succeed;
     if (succeed)
         succeed = setData(index(row), QVariant::fromValue(address));
-
+    qWarning() << succeed;
     Q_ASSERT(succeed == true);
 
     emit countChanged();
+}
+
+QStringList QNetworkSettingsAddressModel::getAddresses(){
+    return m_addresses;
 }
 
 /*!

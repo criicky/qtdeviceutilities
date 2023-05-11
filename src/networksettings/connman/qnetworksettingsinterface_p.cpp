@@ -95,8 +95,10 @@ void QNetworkSettingsInterfacePrivate::setPowered(const bool aPowered)
 
 void QNetworkSettingsInterfacePrivate::scan()
 {
-    if (m_powered)
+    if (m_powered){
         m_technology->Scan();
+        qDebug() << m_technology;
+    }
     else
         qDebug() << "Tried to scan while not powered";
 }

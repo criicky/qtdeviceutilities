@@ -26,34 +26,49 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-#ifndef QNETWORKSETTINGSADDRESSMODEL_H
-#define QNETWORKSETTINGSADDRESSMODEL_H
-
-#include <QStringListModel>
-#include <QtNetworkSettings/qnetworksettingsglobal.h>
+#include "qnetworksettingsuseragent.h"
+#include "qnetworksettingsuseragent_p.h"
+#include <QJniObject>
 
 QT_BEGIN_NAMESPACE
 
-class Q_NETWORKSETTINGS_EXPORT QNetworkSettingsAddressModel : public QStringListModel
-{
-    Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-public:
-    explicit QNetworkSettingsAddressModel(QObject *parent = nullptr);
-    explicit QNetworkSettingsAddressModel(const QStringList &strings, QObject *parent = nullptr);
-    Q_INVOKABLE void append(const QString& address);
-    Q_INVOKABLE void remove(int index);
-    Q_INVOKABLE void resetChanges();
-    void setStringList(const QStringList &addresses);
-    int count() const;
-    QStringList getAddresses();
+const QString PropertyPassphrase(QStringLiteral("Passphrase"));
 
-Q_SIGNALS:
-    void countChanged();
-public:
-    QStringList m_addresses;
-};
+QNetworkSettingsUserAgentPrivate::QNetworkSettingsUserAgentPrivate(QNetworkSettingsUserAgent *parent)
+    :QObject()
+    ,q_ptr(parent)
+    ,m_pendingReply(false)
+{
+
+
+
+}
+
+void QNetworkSettingsUserAgentPrivate::cancel(){
+
+
+}
+
+void QNetworkSettingsUserAgentPrivate::registerAgent()
+{
+}
+
+void QNetworkSettingsUserAgentPrivate::setPassphrase(const QString& passphrase)
+{
+    m_passphrase = passphrase;
+    //gestire il fatto che esista o meno l'ssid
+}
+
+void QNetworkSettingsUserAgentPrivate::setSsidAndPassphrase(const QString &ssid, const QString &passphrase)
+{
+    m_ssid = ssid;
+    m_passphrase = passphrase;
+}
+
+void QNetworkSettingsUserAgentPrivate::clearConnectionState()
+{
+    m_ssid.clear();
+    m_passphrase.clear();
+}
 
 QT_END_NAMESPACE
-
-#endif // QNETWORKSETTINGSADDRESSMODEL_H

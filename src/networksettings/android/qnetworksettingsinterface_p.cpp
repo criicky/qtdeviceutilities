@@ -26,34 +26,37 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-#ifndef QNETWORKSETTINGSADDRESSMODEL_H
-#define QNETWORKSETTINGSADDRESSMODEL_H
-
-#include <QStringListModel>
-#include <QtNetworkSettings/qnetworksettingsglobal.h>
+#include "qnetworksettingsinterface_p.h"
 
 QT_BEGIN_NAMESPACE
 
-class Q_NETWORKSETTINGS_EXPORT QNetworkSettingsAddressModel : public QStringListModel
+QNetworkSettingsInterfacePrivate::QNetworkSettingsInterfacePrivate(QNetworkSettingsInterface* parent)
+    : QObject(parent)
+    , m_technology()
+    ,q_ptr(parent)
 {
-    Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-public:
-    explicit QNetworkSettingsAddressModel(QObject *parent = nullptr);
-    explicit QNetworkSettingsAddressModel(const QStringList &strings, QObject *parent = nullptr);
-    Q_INVOKABLE void append(const QString& address);
-    Q_INVOKABLE void remove(int index);
-    Q_INVOKABLE void resetChanges();
-    void setStringList(const QStringList &addresses);
-    int count() const;
-    QStringList getAddresses();
 
-Q_SIGNALS:
-    void countChanged();
-public:
-    QStringList m_addresses;
-};
+}
+
+void QNetworkSettingsInterfacePrivate::initialize(const QString& path, const QVariantMap& properties)
+{
+
+}
+
+void QNetworkSettingsInterfacePrivate::setState(QNetworkSettingsState::State aState)
+{
+    Q_Q(QNetworkSettingsInterface);
+    m_state.setState(aState);
+    emit q->stateChanged();
+}
+
+void QNetworkSettingsInterfacePrivate::setPowered(const bool aPowered)
+{
+}
+
+void QNetworkSettingsInterfacePrivate::scan()
+{
+}
+
 
 QT_END_NAMESPACE
-
-#endif // QNETWORKSETTINGSADDRESSMODEL_H

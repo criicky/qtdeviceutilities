@@ -307,6 +307,7 @@ void QNetworkSettingsManagerPrivate::handleNewService(const QString &servicePath
     Q_Q(QNetworkSettingsManager);
 
     QNetworkSettingsService *service = new QNetworkSettingsService(servicePath, this);
+    qDebug() << servicePath;
 
     connect(service, &QNetworkSettingsService::connectionStateCleared,
             q, &QNetworkSettingsManager::clearConnectionState);

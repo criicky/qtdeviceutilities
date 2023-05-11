@@ -26,34 +26,49 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
-#ifndef QNETWORKSETTINGSADDRESSMODEL_H
-#define QNETWORKSETTINGSADDRESSMODEL_H
+#ifndef QNETWORKSETTINGSUSERAGENTPRIVATE_H
+#define QNETWORKSETTINGSUSERAGENTPRIVATE_H
 
-#include <QStringListModel>
-#include <QtNetworkSettings/qnetworksettingsglobal.h>
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt API.  It exists for the convenience
+// of other Qt classes.  This header file may change from version to
+// version without notice, or even be removed.
+//
+// We mean it.
+//
+
+#include <QtCore/QObject>
+#include <QJniObject>
 
 QT_BEGIN_NAMESPACE
 
-class Q_NETWORKSETTINGS_EXPORT QNetworkSettingsAddressModel : public QStringListModel
+class QNetworkSettingsUserAgent;
+class QNetworkSettingsUserAgentPrivate : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_CLASSINFO("D-Bus Interface", "net.connman.Agent")
+    Q_DECLARE_PUBLIC(QNetworkSettingsUserAgent)
 public:
-    explicit QNetworkSettingsAddressModel(QObject *parent = nullptr);
-    explicit QNetworkSettingsAddressModel(const QStringList &strings, QObject *parent = nullptr);
-    Q_INVOKABLE void append(const QString& address);
-    Q_INVOKABLE void remove(int index);
-    Q_INVOKABLE void resetChanges();
-    void setStringList(const QStringList &addresses);
-    int count() const;
-    QStringList getAddresses();
-
-Q_SIGNALS:
-    void countChanged();
-public:
-    QStringList m_addresses;
+    QNetworkSettingsUserAgentPrivate(QNetworkSettingsUserAgent *parent = nullptr);
+    void setPassphrase(const QString &passphrase);
+    QString passphrase() const {return m_passphrase;}
+    void cancel();
+    void release();
+    void setSsidAndPassphrase(const QString &ssid, const QString &passphrase);
+    void clearConnectionState();
+public Q_SLOTS: // Dbus methods
+    void registerAgent();
+private:
+    QNetworkSettingsUserAgent *q_ptr;
+    bool m_pendingReply;
+    QString m_passphrase;
+    QString m_ssid;
 };
 
 QT_END_NAMESPACE
 
-#endif // QNETWORKSETTINGSADDRESSMODEL_H
+#endif // QNETWORKSETTINGSUSERAGENTPRIVATE_H
+
