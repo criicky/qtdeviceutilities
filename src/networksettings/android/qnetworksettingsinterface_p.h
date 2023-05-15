@@ -62,10 +62,10 @@ public:
     QNetworkSettingsState::State state() const {return m_state.state();}
     bool powered() const {return m_powered;}
     QString path() const;
+    void updateProperty(const QString &key, const QVariant &val);
 
 protected:
     QString m_name;
-    QJniObject m_technology;
     QNetworkSettingsType m_type;
     QNetworkSettingsState m_state;
     bool m_powered;

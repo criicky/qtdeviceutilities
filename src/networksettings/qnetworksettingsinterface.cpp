@@ -210,4 +210,10 @@ void QNetworkSettingsInterface::scanServices()
     d->scan();
 }
 
+void QNetworkSettingsInterface::propertyCall(QString key,QVariant val)
+{
+    Q_D(QNetworkSettingsInterface);
+    d->updateProperty(key,val);
+}
+
 QT_END_NAMESPACE

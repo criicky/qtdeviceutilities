@@ -55,7 +55,8 @@ class QNetworkSettingsServicePrivate : public QObject
 public:
     QNetworkSettingsServicePrivate(const QString& aPath, QNetworkSettingsService *parent = nullptr);
     QNetworkSettingsService *q_ptr;
-
+private slots:
+    void updateProperty(QString name,QVariant value);
 public:
     static QString ensureMask(int prefixLength);
 protected:
@@ -71,8 +72,8 @@ protected:
     void removeService();
     void setPlaceholderState(bool placeholderState);
     bool placeholderState() const;
-    void propertyCall(QString key,QVariant val);
     bool updateProperties();
+    bool stringlistCompare(QStringList oldList,QStringList newList);
 
     QString m_id;
     QString m_name;
@@ -84,7 +85,7 @@ protected:
     QNetworkSettingsProxy m_proxyConfig;
     QNetworkSettingsWireless m_wifiConfig;
     QNetworkSettingsType m_type;
-    QJniObject m_service;
+    AndroidServiceDB *m_service;
     bool m_placeholderState = false;
     bool m_autoConnect = false;
 };

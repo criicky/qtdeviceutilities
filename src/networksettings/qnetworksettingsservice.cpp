@@ -593,9 +593,4 @@ void QNetworkSettingsService::removeService()
     d->removeService();
 }
 
-void QNetworkSettingsService::propertyCall(QString key, QVariant val){ //per chiamare dall esterno il metodo di updatePriority
-    Q_D(QNetworkSettingsService);
-    d->propertyCall(key,val);
-}
-
 QT_END_NAMESPACE

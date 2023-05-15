@@ -52,6 +52,8 @@ public:
     void setPowered(const bool powered);
     Q_INVOKABLE void scanServices();
 
+    Q_INVOKABLE void propertyCall(QString key,QVariant val);
+
 Q_SIGNALS:
     void nameChanged();
     void stateChanged();

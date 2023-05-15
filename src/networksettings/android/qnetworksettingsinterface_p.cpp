@@ -28,14 +28,38 @@
 ****************************************************************************/
 #include "qnetworksettingsinterface_p.h"
 
+#define PropertyName QStringLiteral("Name")
+#define PropertyType QStringLiteral("Type")
+#define PropertyConnected QStringLiteral("Connected")
+#define PropertyPowered QStringLiteral("Powered")
+
 QT_BEGIN_NAMESPACE
 
 QNetworkSettingsInterfacePrivate::QNetworkSettingsInterfacePrivate(QNetworkSettingsInterface* parent)
     : QObject(parent)
-    , m_technology()
     ,q_ptr(parent)
 {
 
+}
+
+void QNetworkSettingsInterfacePrivate::updateProperty(const QString &key, const QVariant &val)
+{
+    if(key == PropertyName)
+    {
+        m_name = val.toString();
+    }
+    if(key == PropertyType)
+    {
+        m_type.setType(val.value<QNetworkSettingsType *>()->type());
+    }
+    if(key == PropertyConnected)
+    {
+        m_state.setState(val.value<QNetworkSettingsState *>()->state());
+    }
+    if(key == PropertyPowered)
+    {
+        m_powered = val.toBool();
+    }
 }
 
 void QNetworkSettingsInterfacePrivate::initialize(const QString& path, const QVariantMap& properties)

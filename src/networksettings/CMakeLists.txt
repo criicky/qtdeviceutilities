@@ -36,6 +36,8 @@ qt_internal_add_module(NetworkSettings
 elseif(ANDROID)
     qt_internal_add_module(NetworkSettings
         SOURCES
+            android/androidInterfaceDB.cpp android/androidInterfaceDB.h
+            android/androidServiceDB.cpp android/androidServiceDB.h
             android/qnetworksettingsinterface_p.cpp android/qnetworksettingsinterface_p.h
             android/qnetworksettingsmanager_p.cpp android/qnetworksettingsmanager_p.h
             android/qnetworksettingsservice_p.cpp android/qnetworksettingsservice_p.h

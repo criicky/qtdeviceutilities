@@ -45,6 +45,9 @@
 #include <QPointer>
 #include "qnetworksettingsmanager.h"
 #include "qnetworksettingsinterfacemodel.h"
+#include "QNetworkSettingsType"
+#include "androidServiceDB.h"
+#include "androidInterfaceDB.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -76,11 +79,15 @@ public:
     void updateServices();
     bool checkExistence(QString ssid);
     QString formattedSSID(QString ssid);
-    void savingDNS(QJniObject domain,QNetworkSettingsService *service);
-    void savingProxy(QJniObject domain,QNetworkSettingsService *service);
+    void dnsConfig(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
+    void proxyConfig(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
     QString savingGateway(QJniObject linkProperties,QString key);
-    void wirelessConfig(QJniObject wifiInfo,QJniObject networkCapabilities,QNetworkSettingsService *service);
-    bool updateProperties(QVariant mod,QNetworkSettingsService *service);
+    void wirelessConfig(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
+    void updateProperties(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
+    bool changes(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
+    void checkInterface(QList<QNetworkSettingsInterface *> interfacesList);
+    QNetworkSettingsType::Type checkInterfaceType(QString name);
+    bool checkProperties(QNetworkSettingsInterface *oldInterface,QNetworkSettingsInterface *newInterface);
 
 public slots:
     void requestInput(const QString& service, const QString& type);
@@ -92,8 +99,7 @@ private:
     void onServicesChanged();
     void handleNewService(const QString &servicePath);
 public:
-    QNetworkSettingsServiceModel *m_serviceModel;
-    bool changes;
+
 protected:
     QNetworkSettingsInterfaceModel m_interfaceModel;
     QNetworkSettingsServiceFilter *m_serviceFilter;
@@ -110,6 +116,10 @@ private:
     QPointer<QNetworkSettingsService> m_currentWifiConnection;
     QPointer<QNetworkSettingsService> m_currentWiredConnection;
     bool m_initialized;
+    QNetworkSettingsServiceModel *m_serviceModel;
+    bool m_changes;
+    AndroidServiceDB *m_androidService;
+    AndroidInterfaceDB *m_androidInterface;
 
 Q_SIGNALS:
     void priorityCall(QString key,QVariant val);

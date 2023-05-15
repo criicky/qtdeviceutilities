@@ -64,7 +64,6 @@ public:
     QNetworkSettingsWireless* wirelessConfig();
     void setPlaceholderState(bool placeholderState);
     bool placeholderState() const;
-    QString getClaun();
 
     Q_INVOKABLE void setAutoConnect(bool autoconnect);
     Q_INVOKABLE bool autoConnect() const;
@@ -78,8 +77,6 @@ public:
     void doConnectService();
     Q_INVOKABLE void disconnectService();
     Q_INVOKABLE void removeService();
-
-    Q_INVOKABLE void propertyCall(QString key,QVariant val);
 
 Q_SIGNALS:
     void autoConnectChanged();
