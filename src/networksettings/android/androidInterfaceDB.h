@@ -14,12 +14,13 @@ public:
     AndroidInterfaceDB();
     static AndroidInterfaceDB *getInstance();
 Q_SIGNALS:
-    void servicePropertyChanged(QString key,QVariant value);
+    void interfacePropertyChanged(QString key,QVariant value);
 public:
     QString interfaceName;
     QNetworkSettingsType interfaceType;
     QNetworkSettingsState interfaceState;
     bool interfacePowered;
+    bool interfaceChanged;
 private:
     static AndroidInterfaceDB *interfaceInstance;
 };

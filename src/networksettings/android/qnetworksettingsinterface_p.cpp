@@ -38,33 +38,44 @@ QT_BEGIN_NAMESPACE
 QNetworkSettingsInterfacePrivate::QNetworkSettingsInterfacePrivate(QNetworkSettingsInterface* parent)
     : QObject(parent)
     ,q_ptr(parent)
-{
-
+{ //setting all the variables
+    m_powered = false;
+    m_state.setState(QNetworkSettingsState::State::Undefined);
 }
 
 void QNetworkSettingsInterfacePrivate::updateProperty(const QString &key, const QVariant &val)
-{
-    if(key == PropertyName)
+{ //this method gets activated from the singleton class to check if there was an update or not
+    Q_Q(QNetworkSettingsInterface);
+    if(m_technology->interfaceName == m_name)
     {
-        m_name = val.toString();
-    }
-    if(key == PropertyType)
-    {
-        m_type.setType(val.value<QNetworkSettingsType *>()->type());
-    }
-    if(key == PropertyConnected)
-    {
-        m_state.setState(val.value<QNetworkSettingsState *>()->state());
-    }
-    if(key == PropertyPowered)
-    {
-        m_powered = val.toBool();
+        if(key == PropertyType && (m_technology->interfaceType.type() != m_type.type()))
+        {
+            m_technology->interfaceChanged = true;
+            m_type.setType(val.value<QNetworkSettingsType *>()->type());
+            emit q->typeChanged(); //need to send a signal if the type changed
+        }
+        if(key == PropertyConnected && (m_technology->interfaceState.state() != m_state.state()))
+        {
+            m_technology->interfaceChanged = true;
+            m_state.setState(val.value<QNetworkSettingsState *>()->state());
+            emit q->stateChanged(); //need to send a signal if the state changed
+        }
+        if(key == PropertyPowered && (m_technology->interfacePowered != m_powered))
+        {
+            m_technology->interfaceChanged = true;
+            m_powered = val.toBool();
+            emit q->poweredChanged(); //need to send a signal if the power changed
+        }
     }
 }
 
-void QNetworkSettingsInterfacePrivate::initialize(const QString& path, const QVariantMap& properties)
+void QNetworkSettingsInterfacePrivate::initialize(const QString& name)
 {
+    m_name = name;
+    m_technology = AndroidInterfaceDB::getInstance(); //retreiving the instance of the singleton class
 
+    connect(m_technology,SIGNAL(interfacePropertyChanged(QString,QVariant)),
+            this,SLOT(updateProperty(QString,QVariant))); //i need to connect the interface to the singleton just to get signals from it
 }
 
 void QNetworkSettingsInterfacePrivate::setState(QNetworkSettingsState::State aState)
@@ -76,9 +87,10 @@ void QNetworkSettingsInterfacePrivate::setState(QNetworkSettingsState::State aSt
 
 void QNetworkSettingsInterfacePrivate::setPowered(const bool aPowered)
 {
+    m_powered = aPowered;
 }
 
-void QNetworkSettingsInterfacePrivate::scan()
+void QNetworkSettingsInterfacePrivate::scan() //do not need this because the private manager already does it
 {
 }
 

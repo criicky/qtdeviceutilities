@@ -85,9 +85,10 @@ public:
     void wirelessConfig(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
     void updateProperties(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
     bool changes(QNetworkSettingsService *oldService,QNetworkSettingsService *newService);
-    void checkInterface(QList<QNetworkSettingsInterface *> interfacesList);
+    void checkInterface(QStringList newInterfaces);
     QNetworkSettingsType::Type checkInterfaceType(QString name);
     bool checkProperties(QNetworkSettingsInterface *oldInterface,QNetworkSettingsInterface *newInterface);
+    bool interfaceExistence(QString name);
 
 public slots:
     void requestInput(const QString& service, const QString& type);

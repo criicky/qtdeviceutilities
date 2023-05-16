@@ -44,6 +44,7 @@
 #include "qnetworksettings.h"
 #include "qnetworksettingsinterface.h"
 #include <QJniObject>
+#include "androidInterfaceDB.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -53,7 +54,7 @@ class QNetworkSettingsInterfacePrivate : public QObject
     Q_DECLARE_PUBLIC(QNetworkSettingsInterface)
 public:
     explicit QNetworkSettingsInterfacePrivate(QNetworkSettingsInterface* parent);
-    void initialize(const QString& path, const QVariantMap& properties);
+    void initialize(const QString& name);
     void setPowered(const bool power);
     void setState(QNetworkSettingsState::State aState);
     void scan();
@@ -62,6 +63,7 @@ public:
     QNetworkSettingsState::State state() const {return m_state.state();}
     bool powered() const {return m_powered;}
     QString path() const;
+private slots:
     void updateProperty(const QString &key, const QVariant &val);
 
 protected:
@@ -69,7 +71,33 @@ protected:
     QNetworkSettingsType m_type;
     QNetworkSettingsState m_state;
     bool m_powered;
+    AndroidInterfaceDB *m_technology;
     QNetworkSettingsInterface *q_ptr;
+};
+
+class AndroidSettingsInterface : public QNetworkSettingsInterface
+{
+    Q_OBJECT
+public:
+    AndroidSettingsInterface(const QString& name, QObject *parent = nullptr)
+        :QNetworkSettingsInterface(parent)
+    {
+        if (d_ptr)
+            d_ptr->initialize(name);
+    }
+
+    void setState(QNetworkSettingsState::State aState) {
+        Q_D(QNetworkSettingsInterface);
+        d->setState(aState);
+    }
+
+    virtual ~AndroidSettingsInterface() {}
+
+    QString path() const {
+        if (d_ptr)
+            return d_ptr->path();
+        return QString();
+    }
 };
 
 QT_END_NAMESPACE

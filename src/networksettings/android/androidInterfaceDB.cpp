@@ -23,14 +23,17 @@ void AndroidInterfaceDB::updateProperty(const QString &key, const QVariant &val)
     if(key == PropertyType)
     {
         interfaceType.setType(val.value<QNetworkSettingsType *>()->type());
+        emit interfacePropertyChanged(key,val);
     }
     if(key == PropertyConnected)
     {
         interfaceState.setState(val.value<QNetworkSettingsState *>()->state());
+        emit interfacePropertyChanged(key,val);
     }
     if(key == PropertyPowered)
     {
         interfacePowered = val.toBool();
+        emit interfacePropertyChanged(key,val);
     }
 }
 

@@ -501,7 +501,7 @@ void QNetworkSettingsManagerPrivate::tryNextConnection()
     }
 }
 
-void QNetworkSettingsManagerPrivate::onTechnologyAdded()
+void QNetworkSettingsManagerPrivate::onTechnologyAdded() //this method gets called when the timerevent start so is always updated
 {
     Q_Q(QNetworkSettingsManager);
     QJniEnvironment env;
@@ -510,38 +510,60 @@ void QNetworkSettingsManagerPrivate::onTechnologyAdded()
 
     QJniObject interfaces = QJniObject::callStaticObjectMethod(networkInterface,"getNetworkInterfaces",
                                                                "()Ljava/util/Enumeration;");
-    QList<QNetworkSettingsInterface *> interfacesList;
-    while(interfaces.callMethod<jboolean>("hasMoreElements","()Z"))
-    {
+    QStringList newInterfaces;
+    while(interfaces.callMethod<jboolean>("hasMoreElements","()Z")) //to check if there are interfaces
+    { //when it returns true there is another interface to check
         QJniObject interface = interfaces.callObjectMethod("nextElement","()Ljava/lang/Object;");
 
         QString name = interface.callObjectMethod("getName","()Ljava/lang/String;").toString();
-        m_androidInterface->setProperty("Name",name);
+
+        if(!interfaceExistence(name))
+        { //if the name does not already exist in the model then i need to add a new interface
+            AndroidSettingsInterface *newInterface = new AndroidSettingsInterface(name);
+            m_interfaceModel.append(newInterface);
+            m_androidInterface->interfaceChanged = true;
+        }
+        newInterfaces.append(name);
+        m_androidInterface->updateProperty("Name",name);
         QNetworkSettingsType *type = new QNetworkSettingsType();
         type->setType(checkInterfaceType(m_androidInterface->interfaceName));
-        m_androidInterface->setProperty("Type",QVariant::fromValue(type));
-        /*QNetworkSettingsInterface *newInterface = new QNetworkSettingsInterface();
-
-        newInterface->propertyCall("Name",interface.callObjectMethod("getName","()Ljava/lang/String;").toString());
-
-        QNetworkSettingsType *type = new QNetworkSettingsType();
-
-        type->setType(checkInterfaceType(newInterface->name()));
-
-        newInterface->propertyCall("Type",QVariant::fromValue(type));
-
-        interfacesList.append(newInterface);*/
+        m_androidInterface->updateProperty("Type",QVariant::fromValue(type)); //when updating the singleton class the interface is getting updated aswell
+        m_androidInterface->updateProperty("Powered",true);
+        QJniObject inetAddresses = interface.callObjectMethod("getInetAddresses","()Ljava/util/Enumeration;");
+        if(inetAddresses.callMethod<jboolean>("hasMoreElements","()Z")) //there are ips that means that theres a connection going on
+        {
+            QNetworkSettingsState *state = new QNetworkSettingsState();
+            state->setState(QNetworkSettingsState::Online);
+            m_androidInterface->updateProperty("Connected",QVariant::fromValue(state));
+        }
     }
-    checkInterface(interfacesList);
+    checkInterface(newInterfaces); //method to check if an old interface is not available anymore
+    if(m_androidInterface->interfaceChanged == true)
+    {
+        m_androidInterface->interfaceChanged = false;
+        emit q->interfacesChanged();
+    }
+}
+
+bool QNetworkSettingsManagerPrivate::interfaceExistence(QString name)
+{
+    foreach (QNetworkSettingsInterface *oldIntertface, m_interfaceModel.getModel())
+    {
+        if(oldIntertface->name() == name)
+        {
+            return true; //returns true if the interface already exists
+        }
+    }
+    return false; //return false if the interface does not exists
 }
 
 QNetworkSettingsType::Type QNetworkSettingsManagerPrivate::checkInterfaceType(QString name)
-{
+{ //android has multiple types but the global structure only has 4
     if(name.contains("wlan"))
     {
         return QNetworkSettingsType::Wifi;
     }
-    else if(name.contains("eth") || name.contains("enp"))
+    else if(name.contains("eth") || name.contains("enp")) //for android eth is the mobile data connection
     {
         return QNetworkSettingsType::Wired;
     }
@@ -556,83 +578,29 @@ QNetworkSettingsType::Type QNetworkSettingsManagerPrivate::checkInterfaceType(QS
 }
 
 //passing the entire list of interfaces so i can check both ways if theres a new interface or a old one does not exist anymore
-void QNetworkSettingsManagerPrivate::checkInterface(QList<QNetworkSettingsInterface *> interfacesList)
+void QNetworkSettingsManagerPrivate::checkInterface(QStringList newInterfaces)
 {
     Q_Q(QNetworkSettingsManager);
     bool found = false;
-    bool changes = false;
     foreach(QNetworkSettingsInterface *oldInterface, m_interfaceModel.getModel())
     {
-        foreach (QNetworkSettingsInterface *newInterface, interfacesList)
+        foreach (QString newInterface, newInterfaces)
         {
-            if(oldInterface->name() == newInterface->name()) //old interface still exists
+            if(oldInterface->name() == newInterface) //old interface still exists
             {
                 found = true;
-                //need to check the properties
-                if(checkProperties(oldInterface,newInterface))
-                {
-                    changes = true;
-                }
             }
         }
         if(found == false) //if false i didnt find the old interface
         {
             m_interfaceModel.removeInterface(oldInterface->name()); //removing an interface that does not exist anymore
-            changes = true; //to notify the user
+            m_androidInterface->interfaceChanged = true; //to notify the user
         }
         else
         {
             found = false; //need to set found as false for the next cycle
         }
     }
-    foreach(QNetworkSettingsInterface *newInterface, interfacesList)
-    {
-        foreach (QNetworkSettingsInterface *oldInterface, m_interfaceModel.getModel())
-        {
-            if(oldInterface->name() == newInterface->name()) //new interface is an old one
-            {
-                found = true;
-                //need to check the properties
-                if(checkProperties(oldInterface,newInterface))
-                {
-                    changes = true;
-                }
-            }
-        }
-        if(found == false) //if false i have a new interface
-        {
-            m_interfaceModel.append(newInterface);//adding the new interface to the interfaceModel
-            changes = true; //to notify the user
-        }
-        else
-        {
-            found = false; //need to set found as false for the next cycle
-        }
-    }
-    if(changes)
-    {
-        emit q->interfacesChanged();
-    }
-}
-
-bool QNetworkSettingsManagerPrivate::checkProperties(QNetworkSettingsInterface *oldInterface,QNetworkSettingsInterface *newInterface)
-{
-    if(oldInterface->type() != newInterface->type())
-    {
-        QNetworkSettingsType *type = new QNetworkSettingsType();
-        type->setType(newInterface->type());
-        oldInterface->propertyCall("Type",QVariant::fromValue(type));
-        return true;
-    }
-    if(oldInterface->state() != newInterface->state())
-    {
-        //return true;
-    }
-    if(oldInterface->powered() != newInterface->powered())
-    {
-        //return true;
-    }
-    return false;
 }
 
 void QNetworkSettingsManagerPrivate::setCurrentWifiConnection(QNetworkSettingsService *connection)
