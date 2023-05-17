@@ -40,7 +40,7 @@ QNetworkSettingsInterfacePrivate::QNetworkSettingsInterfacePrivate(QNetworkSetti
     ,q_ptr(parent)
 { //setting all the variables
     m_powered = false;
-    m_state.setState(QNetworkSettingsState::State::Undefined);
+    m_state.setState(QNetworkSettingsState::State::Ready);
 }
 
 void QNetworkSettingsInterfacePrivate::updateProperty(const QString &key, const QVariant &val)

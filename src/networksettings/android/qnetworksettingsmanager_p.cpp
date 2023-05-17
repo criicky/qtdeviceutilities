@@ -88,12 +88,14 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
     updateServices();
 
     bool wifiOn = m_wifimanager.callMethod<jboolean>("isWifiEnabled","()Z");
-    if(wifiOn){ //if the wifi in on i check if theres a active network
+    //if(wifiOn)
+    //{ //if the wifi in on i check if theres a active network
         QJniObject activeNetwork = m_connectivitymanager.callObjectMethod("getActiveNetwork",
                                                                           "()Landroid/net/Network;");
 
         if(activeNetwork==NULL)
-        { //if the activeNetwork is null and the currentSsid is not empty i need to clear the connection state
+        { //if the activeNetwork is null and the currentSsid is not empty i need to clear the connection state and interface
+            qDebug() << "am i here";
             if(!m_currentSsid.isEmpty())
             {
                 clearConnectionState();//clearing the connection because is not active anymore
@@ -101,14 +103,12 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
         }
         else
         { //getting all the infos of the network
-
             QJniObject networkCapabilities = m_connectivitymanager.callObjectMethod("getNetworkCapabilities",
                                                                                     "(Landroid/net/Network;)Landroid/net/NetworkCapabilities;",
                                                                                     activeNetwork.object<jobject>());
 
             if(networkCapabilities.callMethod<jboolean>("hasTransport","(I)Z",1))
             {//if the network has transport for wifi than ill check the ssid
-
                 QJniObject wifiInfo = m_wifimanager.callObjectMethod("getConnectionInfo",
                                                                      "()Landroid/net/wifi/WifiInfo;");
 
@@ -138,6 +138,23 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
                 QJniObject linkProperties = m_connectivitymanager.callObjectMethod("getLinkProperties",
                                                                                    "(Landroid/net/Network;)Landroid/net/LinkProperties;",
                                                                                    activeNetwork.object<jobject>());
+
+                //this section is used to change the state of the interface that is being used from ready to online
+                QString newInterface = linkProperties.callObjectMethod("getInterfaceName",
+                                                                       "()Ljava/lang/String;").toString();
+                QList<QNetworkSettingsInterface*> interfaces = m_interfaceModel.getModel();
+                foreach (QNetworkSettingsInterface *interface, interfaces)
+                {
+                    if(interface->name() == newInterface && (interface->state() != QNetworkSettingsState::Online))
+                    {
+                        m_androidInterface->updateProperty("Name",newInterface);
+                        QNetworkSettingsState *state = new QNetworkSettingsState();
+                        state->setState(QNetworkSettingsState::Online);
+                        m_androidInterface->updateProperty("Connected",QVariant::fromValue(state));
+                        break;
+                    }
+                }
+                //end of the section
 
                 QJniObject proxyInfo = linkProperties.callObjectMethod("getHttpProxy",
                                                                        "()Landroid/net/ProxyInfo;"); //proxy could be null if not set
@@ -246,6 +263,60 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
                 type->setType(QNetworkSettingsType::Wired);
                 m_androidService->setProperty("Type",QVariant::fromValue(type));
             }
+            else if(networkCapabilities.callMethod<jboolean>("hasTransport","(I)Z",0))
+            {
+                qDebug() << "cellular data";
+                QJniObject transportInfo = networkCapabilities.callObjectMethod("getTransportInfo",
+                                                                                "()Landroid/net/TransportInfo;");
+                if(transportInfo == NULL)
+                {
+                    qWarning() << "no transport info";
+                }
+                QJniObject wifiInfo = m_wifimanager.callObjectMethod("getConnectionInfo",
+                                                                     "()Landroid/net/wifi/WifiInfo;");
+                if(wifiInfo == NULL)
+                {
+                    qWarning() << "no connection info";
+                }
+                else
+                {
+                    QJniObject telephonyManager = m_context.callObjectMethod("getSystemService",
+                                                                            "(Ljava/lang/String;)Ljava/lang/Object;",
+                                                                            QJniObject::fromString("phone").object<jstring>());
+                    QJniObject packageManager = m_context.callObjectMethod("getPackageManager",
+                                                                           "()Landroid/content/pm/PackageManager;");
+
+                    bool feature = packageManager.callMethod<jboolean>("hasSystemFeature",
+                                                                       "(Ljava/lang/String;)Z",
+                                                                       QJniObject::fromString("android.hardware.telephony.gsm").object<jstring>());
+
+                    if(!feature)
+                    {
+                        qDebug() << "dio cane";
+                    }
+                    else
+                    {
+                        qDebug() << "esiste la feature";
+                    }
+                    if(telephonyManager != NULL)
+                    {
+                        int size = telephonyManager.callMethod<jint>("getActiveModemCount","()I");
+                        qDebug() << size;
+                        //qWarning() << "imei: " << telephonyManager.callObjectMethod("getImei","()Ljava/lang/String;").toString();
+                    }
+                    QJniObject imei = telephonyManager.callObjectMethod("getImei","(I)Ljava/lang/String;",0).toString();
+                    if(imei == NULL)
+                    {
+                        qDebug() << "Dio madonna";
+                    }
+                    /*QJniObject linkProperties = m_connectivitymanager.callObjectMethod("getLinkProperties",
+                                                                                       "(Landroid/net/Network;)Landroid/net/LinkProperties;",
+                                                                                       activeNetwork.object<jobject>());
+                    QString newInterface = linkProperties.callObjectMethod("getInterfaceName",
+                                                                           "()Ljava/lang/String;").toString();
+                    qWarning() << newInterface;*/
+                }
+            }
             QNetworkSettingsService *oldService = m_serviceModel->getByName(m_currentSsid);
             if(oldService != nullptr && m_androidService->changes) //it there was no change in the call then i dont need to send a signal to the user
             {
@@ -262,15 +333,15 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
                 }
             }
         }
-    }
-    else
+    //}
+    /*else
     {
         //if the wifi is off i check the last connection known and if its wifi i need to clear that
         if(!m_currentSsid.isEmpty())
         {
             clearConnectionState();
         }
-    }
+    }*/
 }
 
 QString QNetworkSettingsManagerPrivate::savingGateway(QJniObject linkProperties,QString key){ //update Gateway
@@ -470,7 +541,6 @@ void QNetworkSettingsManagerPrivate::clearConnectionState() //clearing the old c
     }
     m_serviceModel->removeService(m_currentSsid);
     m_currentSsid.clear();
-    //updateServices();
 }
 
 void QNetworkSettingsManagerPrivate::tryNextConnection()
@@ -529,13 +599,6 @@ void QNetworkSettingsManagerPrivate::onTechnologyAdded() //this method gets call
         type->setType(checkInterfaceType(m_androidInterface->interfaceName));
         m_androidInterface->updateProperty("Type",QVariant::fromValue(type)); //when updating the singleton class the interface is getting updated aswell
         m_androidInterface->updateProperty("Powered",true);
-        QJniObject inetAddresses = interface.callObjectMethod("getInetAddresses","()Ljava/util/Enumeration;");
-        if(inetAddresses.callMethod<jboolean>("hasMoreElements","()Z")) //there are ips that means that theres a connection going on
-        {
-            QNetworkSettingsState *state = new QNetworkSettingsState();
-            state->setState(QNetworkSettingsState::Online);
-            m_androidInterface->updateProperty("Connected",QVariant::fromValue(state));
-        }
     }
     checkInterface(newInterfaces); //method to check if an old interface is not available anymore
     if(m_androidInterface->interfaceChanged == true)
