@@ -89,6 +89,9 @@ public:
     QNetworkSettingsType::Type checkInterfaceType(QString name);
     bool checkProperties(QNetworkSettingsInterface *oldInterface,QNetworkSettingsInterface *newInterface);
     bool interfaceExistence(QString name);
+    void available(JNIEnv *env,jobject thiz,jobject network);
+    QString getSSID(QJniObject networkCapabilities);
+    void startActivity();
 
 public slots:
     void requestInput(const QString& service, const QString& type);
@@ -112,6 +115,7 @@ private:
     QJniObject m_context;
     QJniObject m_connectivitymanager;
     QJniObject m_wifimanager;
+    QJniObject m_telephonymanager;
     QNetworkSettingsUserAgent *m_agent;
     QString m_currentSsid;
     QPointer<QNetworkSettingsService> m_currentWifiConnection;

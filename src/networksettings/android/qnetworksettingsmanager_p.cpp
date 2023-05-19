@@ -67,13 +67,73 @@ QNetworkSettingsManagerPrivate::QNetworkSettingsManagerPrivate(QNetworkSettingsM
         m_connectivitymanager = m_context.callObjectMethod("getSystemService",
                                                            "(Ljava/lang/String;)Ljava/lang/Object;",
                                                            QJniObject::fromString("connectivity").object<jstring>());
-
+        m_telephonymanager = m_context.callObjectMethod("getSystemService","(Ljava/lang/String;)Ljava/lang/Object;",
+                                                    QJniObject::fromString("phone").object<jstring>());
         m_changes = false;
         m_androidService = AndroidServiceDB::getInstance();
         m_androidInterface = AndroidInterfaceDB::getInstance();
-        startTimer(2000);
+
+        startActivity();
+
+        //startTimer(2000);
     }
 }
+
+void QNetworkSettingsManagerPrivate::available(JNIEnv *env,jobject thiz,jobject network)
+{
+    qDebug() << "clownfiesta";
+    /*QString ssid;
+    QJniObject nw = (QJniObject) network;
+    QJniObject activeNetwork = m_connectivitymanager.callObjectMethod("getActiveNetwork","()Landroid/net/Network;");
+    //qWarning() << "available active network: " << activeNetwork.toString() << " network: " << nw.toString();
+    QJniObject networkCapabilities = m_connectivitymanager.callObjectMethod("getNetworkCapabilities",
+                                                                          "(Landroid/net/Network;)Landroid/net/NetworkCapabilities;",
+                                                                          nw.object<jobject>());
+    ssid = getSSID(networkCapabilities);
+    qDebug() << "available getSSID: " << ssid;
+    if(!checkExistence(ssid))
+    {
+        QNetworkSettingsService *service = new QNetworkSettingsService(ssid);
+        m_serviceModel->append(service);
+    }*/
+}
+
+void QNetworkSettingsManagerPrivate::startActivity()
+{
+    QJniEnvironment env;
+    JNINativeMethod method[] = {{"available","(Landroid/net/Network;)V",
+                                 reinterpret_cast<void *>(&available)}};
+
+    env.registerNativeMethods("receiver/brdReceiver",method,1);
+
+    QJniObject intent = QJniObject::callStaticObjectMethod("receiver/brdReceiver","start",
+                                                           "(Landroid/content/Context;)Landroid/content/Intent;",
+                                                           m_context.object<jobject>());
+
+    m_context.callMethod<void>("startActivity","(Landroid/content/Intent;)V",intent.object<jobject>());
+}
+
+QString QNetworkSettingsManagerPrivate::getSSID(QJniObject networkCapabilities)
+{
+    QString ssid;
+    if(networkCapabilities.callMethod<jboolean>("hasTransport","(I)Z",0)) //cellular data
+    {
+        QJniObject packageManager = m_context.callObjectMethod("getPackageManager","()Landroid/content/pm/PackageManager;");
+
+        bool hasFeature = packageManager.callMethod<jboolean>("hasSystemFeature","(Ljava/lang/String;)Z",
+                                                              QJniObject::fromString("android.hardware.telephony.gsm").object<jstring>());
+
+        ssid = m_telephonymanager.callObjectMethod("getSimCarrierIdName","()Ljava/lang/CharSequence;").toString();
+    }
+    else if(networkCapabilities.callMethod<jboolean>("hasTransport","(I)Z",1)) //wifi
+    {
+        QJniObject wifiInfo = m_wifimanager.callObjectMethod("getConnectionInfo",
+                                                           "()Landroid/net/wifi/WifiInfo;");
+        ssid = wifiInfo.callObjectMethod("getSSID","()Ljava/lang/String;").toString();
+    }
+    return ssid;
+}
+
 void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
 {
     QJniEnvironment env;
@@ -304,11 +364,7 @@ void QNetworkSettingsManagerPrivate::timerEvent(QTimerEvent *event)
                         qDebug() << size;
                         //qWarning() << "imei: " << telephonyManager.callObjectMethod("getImei","()Ljava/lang/String;").toString();
                     }
-                    QJniObject imei = telephonyManager.callObjectMethod("getImei","(I)Ljava/lang/String;",0).toString();
-                    if(imei == NULL)
-                    {
-                        qDebug() << "Dio madonna";
-                    }
+                    //QJniObject imei = telephonyManager.callObjectMethod("getImei","(I)Ljava/lang/String;",0).toString();
                     /*QJniObject linkProperties = m_connectivitymanager.callObjectMethod("getLinkProperties",
                                                                                        "(Landroid/net/Network;)Landroid/net/LinkProperties;",
                                                                                        activeNetwork.object<jobject>());
